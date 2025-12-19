@@ -96,30 +96,92 @@
             <id>check</id>
             <build>
                 <plugins>
-                    <!-- Checkstyle Plugin -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-checkstyle-plugin</artifactId>
-                        <version>3.2.1</version>
-                        <configuration>
-                            <configLocation>checkstyle.xml</configLocation>
-                            <encoding>UTF-8</encoding>
-                            <consoleOutput>true</consoleOutput>
-                            <failsOnError>false</failsOnError>
-                        </configuration>
-                        <dependencies>
-                            <dependency>
-                                <groupId>com.puppycrawl.tools</groupId>
-                                <artifactId>checkstyle</artifactId>
-                                <version>10.9.3</version>
-                            </dependency>
-                        </dependencies>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                    <!-- ДОБАВЬТЕ ЭТОТ БЛОК -->
+                    <executions>
+                        <execution>
+                            <id>pre-integration-test</id>
+                            <phase>pre-integration-test</phase>
+                            <goals>
+                                <goal>start</goal>
+                            </goals>
+                            <configuration>
+                                <wait>10000</wait>
+                                <maxAttempts>30</maxAttempts>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>post-integration-test</id>
+                            <phase>post-integration-test</phase>
+                            <goals>
+                                <goal>stop</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
-                                <phase>validate</phase>
+                                <id>run-newman-tests</id>
+                                <phase>integration-test</phase>
                                 <goals>
-                                    <goal>check</goal>
+                                    <goal>exec</goal>
                                 </goals>
+                                <configuration>
+                                    <executable>npx</executable>
+                                    <arguments>
+                                        <argument>newman</argument>
+                                        <argument>run</argument>
+                                        <argument>./tests/postman/sprint.json</argument>
+                                        <argument>--delay-request</argument>
+                                        <argument>50</argument>
+                                        <argument>-r</argument>
+                                        <argument>cli,htmlextra</argument>
+                                        <argument>--verbose</argument>
+                                        <argument>--color</argument>
+                                        <argument>on</argument>
+                                        <argument>--reporter-htmlextra-darkTheme</argument>
+                                        <argument>--reporter-htmlextra-export</argument>
+                                        <argument>reports/shareIt.html</argument>
+                                        <argument>--reporter-htmlextra-title</argument>
+                                        <argument>"Отчет по тестам"</argument>
+                                        <argument>--reporter-htmlextra-logs</argument>
+                                        <argument>true</argument>
+                                        <argument>--reporter-htmlextra-template</argument>
+                                        <argument>./tests/.github/workflows/dashboard-template.hbs</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <skipTests>${skipITs}</skipTests>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

@@ -14,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService bookingService;
-    
+
     @PostMapping
     public ResponseEntity<BookingDto> createBooking(
             @RequestHeader("X-Sharer-User-Id") Long userId,
@@ -22,7 +22,7 @@ public class BookingController {
         BookingDto bookingDto = bookingService.createBooking(bookingRequestDto, userId);
         return ResponseEntity.status(201).body(bookingDto);
     }
-    
+
     @PatchMapping("/{bookingId}")
     public ResponseEntity<BookingDto> updateBookingStatus(
             @RequestHeader("X-Sharer-User-Id") Long userId,
@@ -31,7 +31,7 @@ public class BookingController {
         BookingDto bookingDto = bookingService.updateBookingStatus(bookingId, userId, approved);
         return ResponseEntity.ok(bookingDto);
     }
-    
+
     @GetMapping("/{bookingId}")
     public ResponseEntity<BookingDto> getBookingById(
             @RequestHeader("X-Sharer-User-Id") Long userId,
@@ -39,7 +39,7 @@ public class BookingController {
         BookingDto bookingDto = bookingService.getBookingById(bookingId, userId);
         return ResponseEntity.ok(bookingDto);
     }
-    
+
     @GetMapping
     public ResponseEntity<List<BookingDto>> getUserBookings(
             @RequestHeader("X-Sharer-User-Id") Long userId,
@@ -49,7 +49,7 @@ public class BookingController {
         List<BookingDto> bookings = bookingService.getUserBookings(userId, state, from, size);
         return ResponseEntity.ok(bookings);
     }
-    
+
     @GetMapping("/owner")
     public ResponseEntity<List<BookingDto>> getOwnerBookings(
             @RequestHeader("X-Sharer-User-Id") Long ownerId,

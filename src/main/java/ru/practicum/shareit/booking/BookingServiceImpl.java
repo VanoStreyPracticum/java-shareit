@@ -20,7 +20,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
-    
+
     @Override
     @Transactional
     public BookingDto createBooking(BookingRequestDto bookingRequestDto, Long userId) {
@@ -38,15 +38,15 @@ public class BookingServiceImpl implements BookingService {
         if (bookingRequestDto.getEnd().isBefore(bookingRequestDto.getStart())) {
             throw new BadRequestException("Дата окончания не может быть раньше даты начала");
         }
-        
+
         if (bookingRequestDto.getStart().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Дата начала не может быть в прошлом");
         }
-        
+
         if (bookingRequestDto.getEnd().isEqual(bookingRequestDto.getStart())) {
             throw new BadRequestException("Дата начала и окончания не могут совпадать");
         }
-        
+
         Booking booking = Booking.builder()
                 .start(bookingRequestDto.getStart())
                 .end(bookingRequestDto.getEnd())
@@ -54,11 +54,11 @@ public class BookingServiceImpl implements BookingService {
                 .booker(booker)
                 .status(BookingStatus.WAITING)
                 .build();
-        
+
         Booking savedBooking = bookingRepository.save(booking);
         return toDto(savedBooking);
     }
-    
+
     @Override
     @Transactional
     public BookingDto updateBookingStatus(Long bookingId, Long userId, Boolean approved) {
@@ -72,33 +72,33 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.WAITING) {
             throw new BadRequestException("Бронирование уже было обработано");
         }
-        
+
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         Booking updatedBooking = bookingRepository.save(booking);
         return toDto(updatedBooking);
     }
-    
+
     @Override
     public BookingDto getBookingById(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Бронирование не найдено"));
 
-        if (!booking.getBooker().getId().equals(userId) && 
+        if (!booking.getBooker().getId().equals(userId) &&
             !booking.getItem().getOwner().getId().equals(userId)) {
             throw new ForbiddenException("Доступ запрещен");
         }
-        
+
         return toDto(booking);
     }
-    
+
     @Override
     public List<BookingDto> getUserBookings(Long userId, BookingState state, int from, int size) {
         getUser(userId);
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
-        
+
         List<Booking> bookings;
         LocalDateTime now = LocalDateTime.now();
-        
+
         switch (state) {
             case ALL:
                 bookings = bookingRepository.findByBookerIdOrderByStartDesc(userId, pageable);
@@ -121,18 +121,18 @@ public class BookingServiceImpl implements BookingService {
             default:
                 throw new BadRequestException("Unknown state: " + state);
         }
-        
+
         return bookings.stream().map(this::toDto).collect(Collectors.toList());
     }
-    
+
     @Override
     public List<BookingDto> getOwnerBookings(Long ownerId, BookingState state, int from, int size) {
         getUser(ownerId);
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
-        
+
         List<Booking> bookings;
         LocalDateTime now = LocalDateTime.now();
-        
+
         switch (state) {
             case ALL:
                 bookings = bookingRepository.findByItemOwnerIdOrderByStartDesc(ownerId, pageable);
@@ -155,37 +155,37 @@ public class BookingServiceImpl implements BookingService {
             default:
                 throw new BadRequestException("Unknown state: " + state);
         }
-        
+
         return bookings.stream().map(this::toDto).collect(Collectors.toList());
     }
-    
+
     private User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
     }
-    
+
     private Item getItem(Long itemId) {
         return itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Вещь не найдена"));
     }
-    
+
     private BookingDto toDto(Booking booking) {
         BookingDto dto = new BookingDto();
         dto.setId(booking.getId());
         dto.setStart(booking.getStart());
         dto.setEnd(booking.getEnd());
         dto.setStatus(booking.getStatus());
-        
+
         BookingDto.ItemResponse itemResponse = new BookingDto.ItemResponse();
         itemResponse.setId(booking.getItem().getId());
         itemResponse.setName(booking.getItem().getName());
         dto.setItem(itemResponse);
-        
+
         BookingDto.BookerResponse bookerResponse = new BookingDto.BookerResponse();
         bookerResponse.setId(booking.getBooker().getId());
         bookerResponse.setName(booking.getBooker().getName());
         dto.setBooker(bookerResponse);
-        
+
         return dto;
     }
 }

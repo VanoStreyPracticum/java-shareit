@@ -73,26 +73,6 @@
                     </excludes>
                 </configuration>
             </plugin>
-
-            <!-- Maven Enforcer Plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <rules>
-                        <!-- Убираем правило RequireProfileIdsExist -->
-                        <!-- <requireProfileIdsExist /> -->
-                    </rules>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 

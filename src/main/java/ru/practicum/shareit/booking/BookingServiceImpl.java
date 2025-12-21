@@ -1,6 +1,5 @@
 package ru.practicum.shareit.booking;
 
-import ch.qos.logback.classic.Logger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -28,13 +27,13 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingDto createBooking(BookingRequestDto bookingRequestDto, Long userId) {
         log.info("Запрос на создание бронирования от пользователя ID {} для вещи ID {}, даты: {} - {}",
-                userId, bookingRequestDto.getItemId(), 
+                userId, bookingRequestDto.getItemId(),
                 bookingRequestDto.getStart(), bookingRequestDto.getEnd());
-        
+
         User booker = getUser(userId);
         Item item = getItem(bookingRequestDto.getItemId());
 
-        log.debug("Найден пользователь: ID {}, вещь: ID {}, владелец: {}", 
+        log.debug("Найден пользователь: ID {}, вещь: ID {}, владелец: {}",
                 booker.getId(), item.getId(), item.getOwner().getId());
 
         if (!item.isAvailable()) {
@@ -43,25 +42,25 @@ public class BookingServiceImpl implements BookingService {
         }
 
         if (item.getOwner().getId().equals(userId)) {
-            log.warn("Пользователь ID {} пытается забронировать свою собственную вещь ID {}", 
+            log.warn("Пользователь ID {} пытается забронировать свою собственную вещь ID {}",
                     userId, item.getId());
             throw new NotFoundException("Владелец не может бронировать свою вещь");
         }
 
         if (bookingRequestDto.getEnd().isBefore(bookingRequestDto.getStart())) {
-            log.warn("Некорректные даты бронирования: конец {} раньше начала {}", 
+            log.warn("Некорректные даты бронирования: конец {} раньше начала {}",
                     bookingRequestDto.getEnd(), bookingRequestDto.getStart());
             throw new BadRequestException("Дата окончания не может быть раньше даты начала");
         }
 
         if (bookingRequestDto.getStart().isBefore(LocalDateTime.now())) {
-            log.warn("Дата начала бронирования {} находится в прошлом", 
+            log.warn("Дата начала бронирования {} находится в прошлом",
                     bookingRequestDto.getStart());
             throw new BadRequestException("Дата начала не может быть в прошлом");
         }
 
         if (bookingRequestDto.getEnd().isEqual(bookingRequestDto.getStart())) {
-            log.warn("Даты начала и окончания бронирования совпадают: {}", 
+            log.warn("Даты начала и окончания бронирования совпадают: {}",
                     bookingRequestDto.getStart());
             throw new BadRequestException("Дата начала и окончания не могут совпадать");
         }
@@ -74,11 +73,11 @@ public class BookingServiceImpl implements BookingService {
                 .status(BookingStatus.WAITING)
                 .build();
 
-        log.debug("Создано бронирование: пользователь ID {}, вещь ID {}, статус {}", 
+        log.debug("Создано бронирование: пользователь ID {}, вещь ID {}, статус {}",
                 booker.getId(), item.getId(), BookingStatus.WAITING);
-        
+
         Booking savedBooking = bookingRepository.save(booking);
-        
+
         log.info("Бронирование успешно создано с ID {}", savedBooking.getId());
         return toDto(savedBooking);
     }
@@ -86,54 +85,54 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingDto updateBookingStatus(Long bookingId, Long userId, Boolean approved) {
-        log.info("Запрос на обновление статуса бронирования ID {} пользователем ID {}, approved = {}", 
+        log.info("Запрос на обновление статуса бронирования ID {} пользователем ID {}, approved = {}",
                 bookingId, userId, approved);
-        
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> {
                     log.error("Бронирование с ID {} не найдено", bookingId);
                     return new NotFoundException("Бронирование не найдено");
                 });
 
-        log.debug("Найдено бронирование ID {}, владелец вещи: {}, статус: {}", 
+        log.debug("Найдено бронирование ID {}, владелец вещи: {}, статус: {}",
                 booking.getId(), booking.getItem().getOwner().getId(), booking.getStatus());
 
         if (!booking.getItem().getOwner().getId().equals(userId)) {
-            log.warn("Пользователь ID {} не является владельцем вещи бронирования ID {}", 
+            log.warn("Пользователь ID {} не является владельцем вещи бронирования ID {}",
                     userId, bookingId);
             throw new ForbiddenException("Только владелец вещи может подтвердить бронирование");
         }
 
         if (booking.getStatus() != BookingStatus.WAITING) {
-            log.warn("Попытка изменить статус уже обработанного бронирования ID {}, текущий статус: {}", 
+            log.warn("Попытка изменить статус уже обработанного бронирования ID {}, текущий статус: {}",
                     bookingId, booking.getStatus());
             throw new BadRequestException("Бронирование уже было обработано");
         }
 
         BookingStatus newStatus = approved ? BookingStatus.APPROVED : BookingStatus.REJECTED;
         booking.setStatus(newStatus);
-        
+
         log.debug("Установлен новый статус {} для бронирования ID {}", newStatus, bookingId);
-        
+
         Booking updatedBooking = bookingRepository.save(booking);
-        
-        log.info("Статус бронирования ID {} успешно обновлен на {}", 
+
+        log.info("Статус бронирования ID {} успешно обновлен на {}",
                 updatedBooking.getId(), newStatus);
-        
+
         return toDto(updatedBooking);
     }
 
     @Override
     public BookingDto getBookingById(Long bookingId, Long userId) {
         log.debug("Запрос на получение бронирования ID {} пользователем ID {}", bookingId, userId);
-        
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> {
                     log.error("Бронирование с ID {} не найдено", bookingId);
                     return new NotFoundException("Бронирование не найдено");
                 });
 
-        log.debug("Найдено бронирование: автор ID {}, владелец вещи ID {}", 
+        log.debug("Найдено бронирование: автор ID {}, владелец вещи ID {}",
                 booking.getBooker().getId(), booking.getItem().getOwner().getId());
 
         if (!booking.getBooker().getId().equals(userId) &&
@@ -148,13 +147,13 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingDto> getUserBookings(Long userId, BookingState state, int from, int size) {
-        log.info("Запрос на получение бронирований пользователя ID {}, состояние: {}, from: {}, size: {}", 
+        log.info("Запрос на получение бронирований пользователя ID {}, состояние: {}, from: {}, size: {}",
                 userId, state, from, size);
-        
+
         getUser(userId);
-        
+
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
-        log.debug("Создан Pageable: страница {}, размер {}, сортировка по start DESC", 
+        log.debug("Создан Pageable: страница {}, размер {}, сортировка по start DESC",
                 from / size, size);
 
         List<Booking> bookings;
@@ -190,21 +189,21 @@ public class BookingServiceImpl implements BookingService {
                 throw new BadRequestException("Unknown state: " + state);
         }
 
-        log.info("Найдено {} бронирований для пользователя ID {} со статусом {}", 
+        log.info("Найдено {} бронирований для пользователя ID {} со статусом {}",
                 bookings.size(), userId, state);
-        
+
         return bookings.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
     public List<BookingDto> getOwnerBookings(Long ownerId, BookingState state, int from, int size) {
-        log.info("Запрос на получение бронирований владельца ID {}, состояние: {}, from: {}, size: {}", 
+        log.info("Запрос на получение бронирований владельца ID {}, состояние: {}, from: {}, size: {}",
                 ownerId, state, from, size);
-        
+
         getUser(ownerId);
-        
+
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "start"));
-        log.debug("Создан Pageable: страница {}, размер {}, сортировка по start DESC", 
+        log.debug("Создан Pageable: страница {}, размер {}, сортировка по start DESC",
                 from / size, size);
 
         List<Booking> bookings;
@@ -240,9 +239,9 @@ public class BookingServiceImpl implements BookingService {
                 throw new BadRequestException("Unknown state: " + state);
         }
 
-        log.info("Найдено {} бронирований для владельца ID {} со статусом {}", 
+        log.info("Найдено {} бронирований для владельца ID {} со статусом {}",
                 bookings.size(), ownerId, state);
-        
+
         return bookings.stream().map(this::toDto).collect(Collectors.toList());
     }
 
@@ -266,7 +265,7 @@ public class BookingServiceImpl implements BookingService {
 
     private BookingDto toDto(Booking booking) {
         log.trace("Преобразование бронирования ID {} в DTO", booking.getId());
-        
+
         BookingDto dto = new BookingDto();
         dto.setId(booking.getId());
         dto.setStart(booking.getStart());

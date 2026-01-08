@@ -1,11 +1,12 @@
 package ru.practicum.shareit.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.client.UserClient;
 import ru.practicum.shareit.user.UserDto;
 
-import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/users")

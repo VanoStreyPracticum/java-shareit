@@ -119,12 +119,10 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     private ItemRequestResponseDto toResponseDtoWithItems(ItemRequest itemRequest) {
         ItemRequestResponseDto dto = ItemRequestMapper.toResponseDto(itemRequest);
-        
         List<Item> items = itemRepository.findByRequestId(itemRequest.getId());
         dto.setItems(items.stream()
                 .map(ItemMapper::toDto)
                 .collect(Collectors.toList()));
-        
         return dto;
     }
 }

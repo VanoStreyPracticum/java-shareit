@@ -237,9 +237,6 @@ public class ItemServiceImpl implements ItemService {
 
         ItemDto itemDto = ItemMapper.toDto(item);
 
-        itemDto.setLastBooking(null);
-        itemDto.setNextBooking(null);
-
         if (item.getOwner() != null && item.getOwner().getId().equals(userId)) {
             log.debug("Пользователь ID: {} является владельцем вещи ID: {}, добавляем информацию о бронированиях",
                     userId, item.getId());

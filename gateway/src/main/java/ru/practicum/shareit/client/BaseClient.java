@@ -1,5 +1,6 @@
 package ru.practicum.shareit.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -10,9 +11,11 @@ import java.util.Map;
 
 public class BaseClient {
     protected final RestTemplate rest;
+    private final ObjectMapper objectMapper;
 
-    public BaseClient(RestTemplate rest) {
+    public BaseClient(RestTemplate rest, ObjectMapper objectMapper) {
         this.rest = rest;
+        this.objectMapper = objectMapper;
     }
 
     protected ResponseEntity<Object> get(String path) {
@@ -91,9 +94,25 @@ public class BaseClient {
         return headers;
     }
 
-    private static ResponseEntity<Object> prepareGatewayResponse(ResponseEntity<Object> response) {
+    private ResponseEntity<Object> prepareGatewayResponse(ResponseEntity<Object> response) {
         if (response.getStatusCode().is2xxSuccessful()) {
-            return response;
+            Object body = response.getBody();
+            if (body != null) {
+                try {
+                    String json = objectMapper.writeValueAsString(body);
+                    Object processedBody = objectMapper.readValue(json, Object.class);
+                    return ResponseEntity.status(response.getStatusCode())
+                            .headers(response.getHeaders())
+                            .body(processedBody);
+                } catch (Exception e) {
+                    return ResponseEntity.status(response.getStatusCode())
+                            .headers(response.getHeaders())
+                            .body(body);
+                }
+            }
+            return ResponseEntity.status(response.getStatusCode())
+                    .headers(response.getHeaders())
+                    .body(body);
         }
 
         ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(response.getStatusCode());

@@ -1,30 +1,21 @@
 package ru.practicum.shareit.item.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import ru.practicum.shareit.item.comment.CommentDto;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class ItemDto {
     private Long id;
-
-    @NotBlank(message = "Название не может быть пустым")
     private String name;
-
-    @NotBlank(message = "Описание не может быть пустым")
     private String description;
-
-    @NotNull(message = "Поле available обязательно")
     private Boolean available;
-
     private Long ownerId;
     private Long requestId;
     private BookingInfo lastBooking;
@@ -35,6 +26,7 @@ public class ItemDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public static class BookingInfo {
         private Long id;
         private Long bookerId;

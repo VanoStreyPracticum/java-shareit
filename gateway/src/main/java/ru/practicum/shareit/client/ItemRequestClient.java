@@ -1,5 +1,6 @@
 package ru.practicum.shareit.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
@@ -13,11 +14,14 @@ import java.util.Map;
 public class ItemRequestClient extends BaseClient {
     private static final String API_PREFIX = "/requests";
 
-    public ItemRequestClient(@Value("${shareit.server.url}") String serverUrl, RestTemplateBuilder builder) {
+    public ItemRequestClient(@Value("${shareit.server.url}") String serverUrl, 
+                             RestTemplateBuilder builder,
+                             ObjectMapper objectMapper) {
         super(
                 builder
                         .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl + API_PREFIX))
-                        .build()
+                        .build(),
+                objectMapper
         );
     }
 

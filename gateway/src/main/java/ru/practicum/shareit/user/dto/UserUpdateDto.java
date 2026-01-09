@@ -10,6 +10,5 @@ import lombok.*;
 public class UserUpdateDto {
     @Email(message = "Некорректный формат email")
     private String email;
-    
     private String name;
 }

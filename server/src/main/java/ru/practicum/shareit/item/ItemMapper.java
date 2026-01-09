@@ -12,6 +12,9 @@ public class ItemMapper {
                 .available(item.isAvailable())
                 .ownerId(item.getOwner() != null ? item.getOwner().getId() : null)
                 .requestId(item.getRequestId())
+                .lastBooking(null)
+                .nextBooking(null)
+                .comments(null)
                 .build();
     }
 }
